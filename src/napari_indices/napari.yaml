@@ -18,11 +18,9 @@ contributions:
       python_name: napari_indices._widget:ExampleQWidget
       title: Make example QWidget
     - id: napari-indices.make_magic_widget
-      python_name: napari_indices._widget:example_magic_widget
-      title: Make example magic widget
-    - id: napari-indices.make_func_widget
-      python_name: napari_indices._widget:example_function_widget
-      title: Make example function widget
+      python_name: napari_indices._widget:calculate_indice
+      title: Calculate indice
+    
   readers:
     - command: napari-indices.get_reader
       accepts_directories: false
@@ -42,7 +40,5 @@ contributions:
     - command: napari-indices.make_qwidget
       display_name: Example QWidget
     - command: napari-indices.make_magic_widget
-      display_name: Example Magic Widget
-    - command: napari-indices.make_func_widget
-      autogenerate: true
-      display_name: Example Function Widget
+      display_name: Vegetation indices
+    - 
