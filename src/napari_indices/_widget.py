@@ -157,7 +157,7 @@ def calculate_npci(red, green):
 
 
 @magic_factory(call_button=["Run NDVI", "Run TCARI", "Run NPCI"])
-def calculate_indice(image_layer: ImageData, red_band: int = 0, nir_band: int = 0: green_band:int = 0, blue_band:int = 0) -> ImageData:
+def calculate_indice(image_layer: ImageData, red_band: int = 0, nir_band: int = 0: green_band:int = 0, blue_band: int = 0) -> ImageData:
 
 # widget = QWidget()
 # layout = QHBoxLayout()
