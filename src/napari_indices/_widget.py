@@ -9,7 +9,7 @@ Replace code below according to your needs.
 from typing import TYPE_CHECKING
 
 from magicgui import magic_factory
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
+from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget, QMainWindow
 from napari.types import ImageData, LabelsData
 #import spectral.io.envi as envi
 import numpy as np
@@ -19,6 +19,12 @@ import spectral
 from napari import Viewer, layers
 from napari.utils.notifications import show_info
 #from napari_plugin_engine import napari_hook_implementation
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+from PyQt5 import QtCore, QtWidgets
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
 
 
 
@@ -27,7 +33,16 @@ if TYPE_CHECKING:
 
 
 
-class ExampleQWidget(QWidget):
+
+class MplCanvas(FigureCanvasQTAgg):
+    
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
+
+class ExampleQWidget(QMainWindow):
     # your QWidget.__init__ can optionally request the napari viewer instance
     # in one of two ways:
     # 1. use a parameter called `napari_viewer`, as done here
@@ -35,15 +50,94 @@ class ExampleQWidget(QWidget):
     def __init__(self, napari_viewer):
         super().__init__()
         self.viewer = napari_viewer
+        self.cord1 = napari_viewer.layers['Shapes'].data[0]
+        self.cord2 = napari_viewer.layers['Shapes'].data[1] 
 
-        btn = QPushButton("Click me!")
-        btn.clicked.connect(self._on_click)
+        # Images de différents indices de végétation
+        self.ndvi = napari_viewer.layers["NDVI"].data
+        self.tcari = napari_viewer.layers["TCARI"].data
+        self.npci = napari_viewer.layers["NPCI"].data
 
-        self.setLayout(QHBoxLayout())
-        self.layout().addWidget(btn)
+        
+        self.sc = MplCanvas(self, width=5, height=4, dpi=100)
+        toolbar = NavigationToolbar(self.sc, self)
 
-    def _on_click(self):
-        print("napari has", len(self.viewer.layers), "layers")
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(toolbar)
+        layout.addWidget(self.sc)
+        
+        self.btn = QPushButton("Click me!")
+        self.btn.clicked.connect(self.update_plot)
+        layout.addWidget(self.btn)
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
+        self.show()
+        
+    def update_plot(self):
+        
+        # Liste des images 
+        I = [self.ndvi, self.tcari, self.npci]
+
+        # new data is plotted 
+        self.sc.axes.cla()
+
+        # Coordonnées limites de la région 1
+        x1 = int(self.cord1[0][2])
+        x2 = int(self.cord1[1][2])
+        y1 = int(self.cord1[0][1])
+        y2 = int(self.cord1[2][1])
+
+        # Coordonnées limites de la région 2
+        x3 = int(self.cord2[0][2])
+        x4 = int(self.cord2[1][2])
+        y3 = int(self.cord2[0][1])
+        y4 = int(self.cord2[2][1])
+
+        ratio = []
+        indices_vegetation = ["NDVI", "TCARI", "NPCI"]
+        best_indice = None
+
+        # Boucle pour calculer le RF de toutes les images
+        for i, img in enumerate(I):
+            region1 = img[y1:y2, x1:x2]
+            region2 = img[y3:y4, x3:x4]
+            
+            # Valeurs moyennes
+            mean1 = np.mean(region1)
+            mean2 = np.mean(region2)
+            
+            # Écart type
+            std1 = np.std(region1)
+            std2 = np.std(region2)
+
+            # Ratio de Fischer 
+            RF = ((mean1 - mean2) ** 2) / (std1 ** 2 + std2 ** 2)
+            ratio.append(RF)
+
+            # Mise à jour de l'image correspondante au meilleur ratio de Fischer
+            if best_indice is None or RF > ratio[best_indice]:
+                best_indice = i
+                best_region1 = region1
+                best_region2 = region2
+
+        RF_max = np.round(max(ratio), 2)
+        best_indice = indices_vegetation[best_indice]
+
+        self.sc.axes.hist(best_region1.flatten(), bins=50, color='blue', alpha=0.5, label='Région 1')
+        self.sc.axes.hist(best_region2.flatten(), bins=50, color='green', alpha=0.5, label='Région 2')
+        self.sc.axes.set_title(f"Histogrammes des deux régions.\nLe meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}")
+        #plt.legend()
+        #plt.xlabel("Valeurs")
+        #plt.ylabel("Fréquence")
+        #plt.show()
+            
+       
+        # canvas gets updated by redrawing (if this line is omitted, nothing gets updated
+        self.sc.draw()
+
+
+
 
 
 def indices(file):
@@ -175,36 +269,38 @@ def calculate_indice(image_layer: ImageData, image_viewer: Viewer, radio_option=
 
     
 
+"""    
 @magic_factory(call_button="Run")
 def ratio_fischer(image_viewer: Viewer):
-    cord1 = image_viewer.layers["Shapes"].data[0] # Coordonnées de la région 1
-    cord2 = image_viewer.layers["Shapes"].data[1] # Coordonnées de la région 2
+    cord1 = image_viewer.layers["Shapes"].data[0] #cooordonnées de la région 1
+    cord2 = image_viewer.layers["Shapes"].data[1] #cooordonnées de la région 2
     
-    # Images de différents indices de végétation
+    # images de différents indices de végétations
     ndvi = image_viewer.layers["NDVI"].data
     tcari = image_viewer.layers["TCARI"].data
     npci = image_viewer.layers["NPCI"].data
 
     # Liste des images 
-    I = [ndvi, tcari, npci]
+    I=[ndvi, tcari,npci]
 
-    # Coordonnées limites de la région 1
+    #cooordonnées limites de la région 1
     x1 = int(cord1[0][2])
     x2 = int(cord1[1][2])
     y1 = int(cord1[0][1])
     y2 = int(cord1[2][1])
 
-    # Coordonnées limites de la région 2
+
+    #cooordonnées limites de la région 2
     x3 = int(cord2[0][2])
     x4 = int(cord2[1][2])
     y3 = int(cord2[0][1])
     y4 = int(cord2[2][1])
 
-    ratio = []
+    ratio=[]
     indices_vegetation = ["NDVI", "TCARI", "NPCI"]
     best_indice = None
 
-    # Boucle pour calculer le RF de toutes les images
+    # boucle pour calculer le RF de toutes les images
     for i, img in enumerate(I):
         region1 = img[y1:y2, x1:x2]
         region2 = img[y3:y4, x3:x4]
@@ -213,12 +309,12 @@ def ratio_fischer(image_viewer: Viewer):
         mean1 = np.mean(region1)
         mean2 = np.mean(region2)
         
-        # Écart type
+        # Ecart type
         std1 = np.std(region1)
         std2 = np.std(region2)
 
         # Ratio de Fischer 
-        RF = ((mean1 - mean2) ** 2) / (std1 ** 2 + std2 ** 2)
+        RF=((mean1-mean2)**2)/(std1**2+std2**2)
         ratio.append(RF)
 
         # Mise à jour de l'image correspondante au meilleur ratio de Fischer
@@ -230,15 +326,18 @@ def ratio_fischer(image_viewer: Viewer):
     RF_max = np.round(max(ratio), 2)
     best_indice = indices_vegetation[best_indice]
 
+    # Création d'une nouvelle figure pour l'histogramme
+    plt.figure()
+
     # Affichage de l'histogramme des deux régions du meilleur indice de végétation
     plt.hist(best_region1.flatten(), bins=50, color='blue', alpha=0.5, label='Région 1')
     plt.hist(best_region2.flatten(), bins=50, color='green', alpha=0.5, label='Région 2')
-    plt.title(f"Histogrammes des deux régions.\nLe meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}")
+    plt.title("Histogrammes des deux régions")
     plt.legend()
     plt.xlabel("Valeurs")
     plt.ylabel("Fréquence")
     plt.show()
     
-    show_info(f"Le meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}")
+    show_info(f"Le meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}" )
 
-    return RF_max, best_indice
+    return RF_max, best_indice"""
