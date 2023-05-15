@@ -33,6 +33,14 @@ To install latest development version :
 
     pip install git+https://github.com/Emmanulla0/napari-indices.git
 
+## Plugin description
+
+
+After programming the plugin, it was installed and launched by accessing the Plugins menu > Napari-vegetation-indices-fisher-ratio > Vegetation indices. Using the plugin requires importing the bands of a hyperspectral image. Then, the vegetation index to be calculated and the desired bands to use must be selected. Finally, clicking the **Run** button initiates the calculation.
+
+To define the regions of interest for analysis, click on the Shapes button in the Napari interface and choose the **add rectangle** option from the menu that appears. Using the mouse, draw a rectangle around each of the two areas to be analyzed, for example, a tree leaf and a green paper leaf.
+
+To calculate the Fisher ratio and display the histogram, go back to the Plugins menu > Napari-vegetation-indices-fisher-ratio > ExampleGWidget and click the **Click me!** button. This action opens a new window displaying the optimal vegetation index to use, its corresponding Fisher ratio, and the histogram of the two selected regions on the vegetation index image.
 
 ## Contributing
 
