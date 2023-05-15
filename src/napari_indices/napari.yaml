@@ -20,6 +20,9 @@ contributions:
     - id: napari-indices.make_magic_widget
       python_name: napari_indices._widget:calculate_indice
       title: Calculate indice
+    - id: napari-indices.magic_widget
+      python_name: napari_indices._widget:ratio_fischer
+      title: Ratio de Fischer
     
   readers:
     - command: napari-indices.get_reader
@@ -41,4 +44,6 @@ contributions:
       display_name: Example QWidget
     - command: napari-indices.make_magic_widget
       display_name: Vegetation indices
-    - 
+    - command: napari-indices.magic_widget
+      display_name: Ratio de Fischer
+     

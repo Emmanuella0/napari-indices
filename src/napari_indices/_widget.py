@@ -11,13 +11,20 @@ from typing import TYPE_CHECKING
 from magicgui import magic_factory
 from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
 from napari.types import ImageData, LabelsData
-import spectral.io.envi as envi
+#import spectral.io.envi as envi
 import numpy as np
 import matplotlib.pyplot as plt
 import tifffile as tiff
+import spectral
+from napari import Viewer, layers
+from napari.utils.notifications import show_info
+#from napari_plugin_engine import napari_hook_implementation
+
+
 
 if TYPE_CHECKING:
     import napari
+
 
 
 class ExampleQWidget(QWidget):
@@ -44,8 +51,8 @@ def indices(file):
     img = tiff.imread(file)
     
     # Charger les informations sur les longueurs d'onde
-    header = spectral.envi.read_envi_header(r'C:\Users\EMMANUELLA\Documents\vert_emmanuella_8600_us_2x_2023-04-25T153039_corr_rad.hdr')
-    wavelengths = header['wavelength']
+    #header = spectral.envi.read_envi_header(r'C:\Users\EMMANUELLA\Documents\vert_emmanuella_8600_us_2x_2023-04-25T153039_corr_rad.hdr')
+    #wavelengths = header['wavelength']
     
     # Nombre de bandes et dimensions de l'image
     b, h, w = img.shape
@@ -53,7 +60,7 @@ def indices(file):
     # Affichage de toutes les bandes avec leurs longueurs d'onde
     for i in range(b):
        plt.imshow(img[i], cmap='gray')
-       plt.title(f"Bande {i+1} - Longueur d'onde : {wavelengths[i]} nm")
+       plt.title(f"Bande {i+1}") #- Longueur d'onde : {wavelengths[i]} nm")
        plt.axis('off')
        plt.show()
     
@@ -94,7 +101,7 @@ def indices(file):
     red = img[red_band - 1]
     nir = img[nir_band - 1]
     green = img[green_band - 1]
-    blue = img[blue_band-1]
+    blue = img[blue_band - 1]
     
     # Demander à l'utilisateur de choisir un indice
     while True:
@@ -116,79 +123,122 @@ def indices(file):
         npci = calculate_npci(red, green)
         return npci
 
-def calculate_ndvi(red, nir):
+def calculate_ndvi(red, nir, image_viewer):
     # Calculer la NDVI
     ndvi = (nir - red) / (nir + red)
-    
-    # Afficher l'image de la NDVI avec un titre
-    plt.imshow(ndvi, cmap='gray')
-    plt.title("NDVI")
-    plt.axis('off')
-    plt.show()
+
+
     
     # Retourner l'image de la NDVI
-    return ndvi
+    return image_viewer.add_image(ndvi, name="NDVI")
 
-def calculate_tcari(red, green, blue):
+def calculate_tcari(red, green, blue, image_viewer):
     # Calculer le TCARI
     tcari = 3 * ((red - green) - 0.2 * (red - blue))
     
-    # Afficher l'image du TCARI avec un titre
-    plt.imshow(tcari, cmap='gray')
-    plt.title("TCARI")
-    plt.axis('off')
-    plt.show()
+    
     
     # Retourner l'image du TCARI
-    return tcari
+    return image_viewer.add_image(tcari, name="TCARI")
 
-def calculate_npci(red, green):
+def calculate_npci(red, green,image_viewer):
     # Calculer le NPCI
     npci = (green - red) / (green + red)
+
+
+
+    # Retourner l'image du NPCI
+    return image_viewer.add_image(npci, name="NPCI")
+
+@magic_factory(call_button="Run",radio_option={"widget_type":"RadioButtons", "orientation":"vertical", "choices":[("NDVI",1),("TCARI",2),("NPCI",3)]})
+def calculate_indice(image_layer: ImageData, image_viewer: Viewer, radio_option=1, red_band: int = 0, nir_band: int = 0, green_band:int = 0, blue_band: int = 0) -> ImageData:
     
-    # Afficher l'image du NPCI avec un titre
-    plt.imshow(npci, cmap='gray')
-    plt.title("NPCI")
-    plt.axis('off')
+    ndvi = None
+    tcari = None
+    npci = None
+
+    if red_band == 0 or nir_band == 0 or blue_band == 0 or green_band == 0:
+        print("select correct band")
+    
+    else:
+        red = image_layer[red_band - 1,:,:]
+        nir = image_layer[nir_band - 1,:,:]
+        green = image_layer[green_band - 1,:,:]
+        blue = image_layer[blue_band - 1,:,:]
+
+    if radio_option == 1:
+        return calculate_ndvi(red, nir,image_viewer)
+    if radio_option == 2:
+        return calculate_tcari(red, green, blue, image_viewer)
+    if radio_option == 3:
+        return calculate_npci (red, green, image_viewer)
+
+    
+
+@magic_factory(call_button="Run")
+def ratio_fischer(image_viewer: Viewer):
+    cord1 = image_viewer.layers["Shapes"].data[0] # Coordonnées de la région 1
+    cord2 = image_viewer.layers["Shapes"].data[1] # Coordonnées de la région 2
+    
+    # Images de différents indices de végétation
+    ndvi = image_viewer.layers["NDVI"].data
+    tcari = image_viewer.layers["TCARI"].data
+    npci = image_viewer.layers["NPCI"].data
+
+    # Liste des images 
+    I = [ndvi, tcari, npci]
+
+    # Coordonnées limites de la région 1
+    x1 = int(cord1[0][2])
+    x2 = int(cord1[1][2])
+    y1 = int(cord1[0][1])
+    y2 = int(cord1[2][1])
+
+    # Coordonnées limites de la région 2
+    x3 = int(cord2[0][2])
+    x4 = int(cord2[1][2])
+    y3 = int(cord2[0][1])
+    y4 = int(cord2[2][1])
+
+    ratio = []
+    indices_vegetation = ["NDVI", "TCARI", "NPCI"]
+    best_indice = None
+
+    # Boucle pour calculer le RF de toutes les images
+    for i, img in enumerate(I):
+        region1 = img[y1:y2, x1:x2]
+        region2 = img[y3:y4, x3:x4]
+        
+        # Valeurs moyennes
+        mean1 = np.mean(region1)
+        mean2 = np.mean(region2)
+        
+        # Écart type
+        std1 = np.std(region1)
+        std2 = np.std(region2)
+
+        # Ratio de Fischer 
+        RF = ((mean1 - mean2) ** 2) / (std1 ** 2 + std2 ** 2)
+        ratio.append(RF)
+
+        # Mise à jour de l'image correspondante au meilleur ratio de Fischer
+        if best_indice is None or RF > ratio[best_indice]:
+            best_indice = i
+            best_region1 = region1
+            best_region2 = region2
+
+    RF_max = np.round(max(ratio), 2)
+    best_indice = indices_vegetation[best_indice]
+
+    # Affichage de l'histogramme des deux régions du meilleur indice de végétation
+    plt.hist(best_region1.flatten(), bins=50, color='blue', alpha=0.5, label='Région 1')
+    plt.hist(best_region2.flatten(), bins=50, color='green', alpha=0.5, label='Région 2')
+    plt.title(f"Histogrammes des deux régions.\nLe meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}")
+    plt.legend()
+    plt.xlabel("Valeurs")
+    plt.ylabel("Fréquence")
     plt.show()
     
-    # Retourner l'image du NPCI
-    return npci
+    show_info(f"Le meilleur indice de végétation est: {best_indice} et son ratio de Fisher est: {RF_max}")
 
-
-@magic_factory(call_button=["Run NDVI", "Run TCARI", "Run NPCI"])
-def calculate_indice(image_layer: ImageData, red_band: int = 0, nir_band: int = 0: green_band:int = 0, blue_band: int = 0) -> ImageData:
-
-# widget = QWidget()
-# layout = QHBoxLayout()
-# button_select_bands = QPushButton("Select Bands")
-# button_run_ndvi = QPushButton("Run NDVI")
-
-ndvi = None
-tcari = None
-npci = None
-
-if red_band == 0 or nir_band == 0 or blue_band == 0 or green_band == 0:
-    print("select correct band")
-    #*red, nir = select_bands(image_layer.data)
-else:
-    red = image_layer[red_band - 1,:,:]
-    nir = image_layer[nir_band - 1,:,:]
-    green = image_layer[green_band - 1,:,:]
-    blue = image_layer[blue_band - 1,:,:]
-
-    ndvi = calculate_ndvi(red, nir)
-    tcari = calculate_tcari(red, green, blue)
-    npci = calculate_npci(red, green)
-    print(ndvi.shape)
-    print(tcari.shape)
-    print(npci.shape)
-    return ndvi, tcari, npci
-#button_select_bands.clicked.connect(select_bands_and_calculate_ndvi)
-#button_run_ndvi.clicked.connect(select_bands_and_calculate_ndvi)
-
-#layout.addWidget(button_select_bands)
-#layout.addWidget(button_run_ndvi)
-#widget.setLayout(layout)
-
-
+    return RF_max, best_indice
