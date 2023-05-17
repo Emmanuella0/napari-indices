@@ -57,7 +57,8 @@ class ExampleQWidget(QMainWindow):
         self.ndvi = napari_viewer.layers["NDVI"].data
         self.tcari = napari_viewer.layers["TCARI"].data
         self.npci = napari_viewer.layers["NPCI"].data
-
+        self.sgi = napari_viewer.layers["SGI"].data
+        self.ndgi = napari_viewer.layers["NDGI"].data
         
         self.sc = MplCanvas(self, width=5, height=4, dpi=100)
         toolbar = NavigationToolbar(self.sc, self)
@@ -77,7 +78,7 @@ class ExampleQWidget(QMainWindow):
     def update_plot(self):
         
         # Liste des images 
-        I = [self.ndvi, self.tcari, self.npci]
+        I = [self.ndvi, self.tcari, self.npci, self.sgi, self.ndgi]
 
         # new data is plotted 
         self.sc.axes.cla()
@@ -95,7 +96,7 @@ class ExampleQWidget(QMainWindow):
         y4 = int(self.cord2[2][1])
 
         ratio = []
-        indices_vegetation = ["NDVI", "TCARI", "NPCI"]
+        indices_vegetation = ["NDVI", "TCARI", "NPCI", "SGI", "NDGI"]
         best_indice = None
 
         # Boucle pour calculer le RF de toutes les images
@@ -199,8 +200,8 @@ def indices(file):
     
     # Demander à l'utilisateur de choisir un indice
     while True:
-        indice = input("Choisissez un indice (NDVI, TCARI, NPCI) : ")
-        if indice not in ["NDVI", "TCARI", "NPCI"]:
+        indice = input("Choisissez un indice (NDVI, TCARI, NPCI, SGI, NDGI) : ")
+        if indice not in ["NDVI", "TCARI", "NPCI", "SGI"]:
             print("Indice invalide. Veuillez réessayer.")
             continue
         else:
@@ -216,12 +217,16 @@ def indices(file):
     elif indice == "NPCI":
         npci = calculate_npci(red, green)
         return npci
+    elif indice == "SGI":
+        sgi = calculate_sgi(nir, red)
+        return sgi
+    elif indice == "NDGI":
+        ndgi = calculate_ndgi(green, red)
+        return ndgi
 
 def calculate_ndvi(red, nir, image_viewer):
     # Calculer la NDVI
     ndvi = (nir - red) / (nir + red)
-
-
     
     # Retourner l'image de la NDVI
     return image_viewer.add_image(ndvi, name="NDVI")
@@ -230,8 +235,6 @@ def calculate_tcari(red, green, blue, image_viewer):
     # Calculer le TCARI
     tcari = 3 * ((red - green) - 0.2 * (red - blue))
     
-    
-    
     # Retourner l'image du TCARI
     return image_viewer.add_image(tcari, name="TCARI")
 
@@ -239,17 +242,31 @@ def calculate_npci(red, green,image_viewer):
     # Calculer le NPCI
     npci = (green - red) / (green + red)
 
-
-
     # Retourner l'image du NPCI
     return image_viewer.add_image(npci, name="NPCI")
 
-@magic_factory(call_button="Run",radio_option={"widget_type":"RadioButtons", "orientation":"vertical", "choices":[("NDVI",1),("TCARI",2),("NPCI",3)]})
-def calculate_indice(image_layer: ImageData, image_viewer: Viewer, radio_option=1, red_band: int = 0, nir_band: int = 0, green_band:int = 0, blue_band: int = 0) -> ImageData:
+def calculate_sgi(red, nir, image_viewer):
+    # Calculer la SGI
+    sgi = nir / red
+
+    # Retourner l'image de la SGI
+    return image_viewer.add_image(sgi, name="SGI")
+
+def calculate_ndgi(green, red, image_viewer):
+    # Calculer la NGVI
+    ndgi = (green - red) / (green + red)
+    
+    # Retourner l'image de la NDGI
+    return image_viewer.add_image(ndgi, name="NDGI")
+
+@magic_factory(call_button="Run", dropdown = {"choices":["NDVI","TCARI","NPCI","SGI","NDGI"]})
+def calculate_indice(image_layer: ImageData, image_viewer: Viewer, dropdown="NDVI", red_band: int = 0, nir_band: int = 0, green_band:int = 0, blue_band: int = 0) -> ImageData:
     
     ndvi = None
     tcari = None
     npci = None
+    sgi= None
+    ndgi = None
 
     if red_band == 0 or nir_band == 0 or blue_band == 0 or green_band == 0:
         print("select correct band")
@@ -260,12 +277,16 @@ def calculate_indice(image_layer: ImageData, image_viewer: Viewer, radio_option=
         green = image_layer[green_band - 1,:,:]
         blue = image_layer[blue_band - 1,:,:]
 
-    if radio_option == 1:
+    if dropdown == "NDVI":
         return calculate_ndvi(red, nir,image_viewer)
-    if radio_option == 2:
+    if dropdown == "TCARI":
         return calculate_tcari(red, green, blue, image_viewer)
-    if radio_option == 3:
+    if dropdown == "NPCI":
         return calculate_npci (red, green, image_viewer)
+    if dropdown == "SGI":
+        return calculate_sgi (nir, red, image_viewer)
+    if dropdown == "NDGI":
+        return calculate_ndgi (green, red, image_viewer)
 
     
 
