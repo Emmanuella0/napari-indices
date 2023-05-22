@@ -145,9 +145,9 @@ def indices(file):
     # Ouvrir le fichier
     img = tiff.imread(file)
     
-    # Charger les informations sur les longueurs d'onde
-    #header = spectral.envi.read_envi_header(r'C:\Users\EMMANUELLA\Documents\vert_emmanuella_8600_us_2x_2023-04-25T153039_corr_rad.hdr')
-    #wavelengths = header['wavelength']
+     # Charger les informations sur les longueurs d'onde
+    header = spectral.envi.read_envi_header(r'C:\Users\EMMANUELLA\Documents\vert_emmanuella_8600_us_2x_2023-04-25T153039_corr_rad.hdr')
+    wavelengths = header['wavelength']
     
     # Nombre de bandes et dimensions de l'image
     b, h, w = img.shape
@@ -155,7 +155,7 @@ def indices(file):
     # Affichage de toutes les bandes avec leurs longueurs d'onde
     for i in range(b):
        plt.imshow(img[i], cmap='gray')
-       plt.title(f"Bande {i+1}") #- Longueur d'onde : {wavelengths[i]} nm")
+       plt.title(f"Bande {i+1} - Longueur d'onde : {wavelengths[i]} nm")
        plt.axis('off')
        plt.show()
     
@@ -196,7 +196,7 @@ def indices(file):
     red = img[red_band - 1]
     nir = img[nir_band - 1]
     green = img[green_band - 1]
-    blue = img[blue_band - 1]
+    blue = img[blue_band-1]
     
     # Demander à l'utilisateur de choisir un indice
     while True:
