@@ -36,16 +36,16 @@ To install latest development version :
 ## Plugin description
 
 
-After programming the plugin, it was installed and launched by accessing the Plugins menu > napari-indices > Vegetation indices. Using the plugin requires importing the bands of a hyperspectral image. Then, the vegetation index to be calculated and the desired bands to use must be selected. Finally, clicking the **Run** button initiates the calculation.
+Using this plugin requires importing the bands of a hyperspectral image into a **tif file**, in our case, 160 bands. You must launch it by accessing the **Plugins > napari-indices> Vegetation indices** menu.
 
-To define the regions of interest for analysis, click on the Shapes button in the Napari interface and choose the **add rectangle** option from the menu that appears. Using the mouse, draw a rectangle around each of the two areas to be analyzed, for example, a tree leaf and a green paper leaf.
-
-![Capture d'écran 2023-05-12 155843](https://github.com/Emmanuella0/napari-indices/assets/132358490/5712f6e1-a56f-4924-8978-4da19b725bc6)
+Then select the vegetation index to be calculated and the different bands to be used, then click the **Run** button to start the calculation. This results in the images corresponding to the calculated indices.
 
 
-To calculate the Fisher ratio and display the histogram, go back to the Plugins menu > napari-indices > ExampleGWidget and click the **Click me!** button. This action opens a new window displaying the optimal vegetation index to use, its corresponding Fisher ratio, and the histogram of the two selected regions on the vegetation index image.
-![Capture d'écran 2023-05-12 161020](https://github.com/Emmanuella0/napari-indices/assets/132358490/2dbe2f08-76c3-4037-b84f-cd3d915471f0)
+The areas of interest to be analysed must then be defined. To do this, click the **Shapes** button on the Napari interface and choose the **add rectangle** shape from the menu that appears. Using the mouse, it is then possible to draw a rectangle on each of the two areas to be analyzed, for example a tree sheet and a green sheet of paper. 
 
+
+
+To perform the Fisher ratio calculation and display the histogram, it is necessary to go back to the **Plugins > napari-indices > ExempleGWidget** menu and click the **Click me! **. This action opens a new window displaying the best vegetation index to use, its corresponding Fisher ratio and the histogram of the two selected regions on the image of the vegetation index concerned. A video explaining the plugin is available at: https://uabox.univ-angers.fr/index.php/s/LqB0qs11n3jxZVJ.
 
 ## Contributing
 
