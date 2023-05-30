@@ -50,7 +50,7 @@ The areas of interest to be analysed must then be defined. To do this, click the
 ![etape_3](https://github.com/Emmanuella0/napari-indices/assets/132358490/fc8612fe-5deb-4290-b4c3-9cac20acf1ce)
 
 
-To perform the Fisher ratio calculation and display the histogram, it is necessary to go back to the **Plugins > napari-indices > ExempleGWidget** menu and click the **Click me! **. This action opens a new window displaying the best vegetation index to use, its corresponding Fisher ratio and the histogram of the two selected regions on the image of the vegetation index concerned. A video explaining the plugin is available at: https://uabox.univ-angers.fr/index.php/s/LqB0qs11n3jxZVJ.
+To perform the Fisher ratio calculation and display the histogram, it is necessary to go back to the **Plugins > napari-indices > ExempleQWidget** menu and click the **Click me! **. This action opens a new window displaying the best vegetation index to use, its corresponding Fisher ratio and the histogram of the two selected regions on the image of the vegetation index concerned. A video explaining the plugin is available at: https://uabox.univ-angers.fr/index.php/s/LqB0qs11n3jxZVJ.
 
 ![Histogram](https://github.com/Emmanuella0/napari-indices/assets/132358490/be176176-1972-402c-9a01-8e367347d9d8)
 
