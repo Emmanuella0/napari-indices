@@ -20,7 +20,7 @@ https://github.com/napari/cookiecutter-napari-plugin#getting-started
 and review the napari docs for plugin developers:
 https://napari.org/stable/plugins/index.html
 -->
-
+Emmanuella OKAFOR (L3 PA CMI-PSI_Université d'Angers) developed this plugin during her internship with a french team called ImHorPHen (lead by David ROUSSEAU). This plugin realises vegetation indexes computation with hyperspectral images. For the momment, there are five vegetation indexes : NDVI, TCARI, NPCI, SGI, NDGI.
 ## Installation
 
 You can install `napari-indices` via [pip]:
